@@ -1,78 +1,84 @@
-# Fine-Tuning-ParsBERT-for-Persian-Question-Answering-on-PQuAD
-My first attempt at fine-tuning ParsBERT on PQuAD for Persian QA using Colab's free T4 GPU. Overcame dataset loading errors, overfitting, and limited VRAM. Achieved 36.56% Exact Match and 37.43% F1 score. Challenges included Transformers library complexities and manual JSON uploads. Future: tune hyperparameters, add no-answer detection.
-# Project Report: Fine-Tuning ParsBERT for Persian Question Answering on PQuAD
+# Fine-Tuning-ParsBERT-for-Persian-Question-Answering-on- PersianQA
+First fine-tuning of Llama-3.1-8B-4bit via API (access rejected) on PersianQA using Colab T4. Fixed dataset errors (RuntimeError: scripts) with JSON upload. Achieved 36.56% EM, 37.43% F1. Challenges: T4 limits, Transformers issues. Next: tune params, no-answer detection.
+# Project Report: Fine-Tuning Llama-3.1-8B-4bit via API on PersianQA Dataset
 
 ## Project Overview
-This project marks my first attempt at fine-tuning a machine learning model. I used Google Colab’s free tier with a T4 GPU to fine-tune the ParsBERT model (`HooshvareLab/bert-base-parsbert-uncased`) on the PQuAD dataset for Persian question-answering (QA). PQuAD is a Persian dataset similar to SQuAD, containing contexts, questions, and answers (including unanswerable ones). The goal was to adapt a pre-trained language model to accurately answer questions in Persian, handling challenges like right-to-left (RTL) text and unanswerable questions.
+This was my first attempt to fine-tune a model, following my prompting evaluation and preceding my Persian RAG setup. Using Google Colab’s free T4 GPU, I fine-tuned the `Llama-3.1-8B-4bit` model via an API (due to rejected access on Hugging Face) on the PersianQA dataset for Persian question-answering (QA). PersianQA, similar to SQuAD, contains contexts, questions, and answers (including unanswerable ones). The goal was to adapt the model for accurate Persian QA, handling right-to-left (RTL) text and unanswerable questions.
 
 **Objectives**:
-- Load and preprocess the PQuAD dataset.
-- Fine-tune ParsBERT using Hugging Face’s Transformers library.
-- Evaluate performance using SQuAD metrics (Exact Match and F1 score).
-- Address challenges with Persian text and computational constraints.
+- Load and preprocess PersianQA dataset.
+- Fine-tune `Llama-3.1-8B-4bit` via API using Hugging Face’s Transformers.
+- Evaluate performance with SQuAD metrics (Exact Match, F1).
+- Address Persian text and computational challenges.
 
 **Tech Stack**:
-- Python libraries: Transformers (v4.55.3), Datasets, Torch, Evaluate.
-- Model: HooshvareLab/bert-base-parsbert-uncased.
-- Environment: Google Colab (free tier, T4 GPU).
+- Python libraries: Transformers (v4.55.3), Datasets, Torch, Evaluate, BitsAndBytes, TRL.
+- Model: Llama-3.1-8B-4bit (accessed via API, e.g., Hugging Face Inference API).
+- Environment: Google Colab (free T4 GPU, ~15GB VRAM).
 
 ## Methodology
 1. **Data Preparation**:
-   - Loaded train (9008 examples) and test (930 examples) JSON files from PQuAD.
-   - Flattened nested JSON structure into a SQuAD-like format (`id`, `context`, `question`, `answers`).
-   - Tokenized inputs using ParsBERT’s tokenizer, mapping answer spans to token positions.
-   - Handled unanswerable questions (~30% of test set) by setting default positions to the [CLS] token.
+   - Loaded PersianQA train (9,000 examples, 2,700 unanswerable) and test (938 examples, 280 unanswerable) from https://huggingface.co/datasets/SajjadAyoubi/persian_qa.
+   - Flattened JSON into SQuAD format (`id`, `context`, `question`, `answers`).
+   - Tokenized inputs using the model’s tokenizer, mapping answer spans to token positions.
+   - Handled unanswerable questions (~30% of test set) by setting default positions to [CLS] token.
 
 2. **Model Fine-Tuning**:
-   - Used `AutoModelForQuestionAnswering` and `AutoTokenizer` from Transformers.
-   - Training args: 3 epochs, batch size 16, learning rate 3e-5, AdamW optimizer with weight decay 0.01.
-   - Employed Hugging Face’s Trainer for training and evaluation.
+   - Accessed `Llama-3.1-8B-4bit` via API with 4-bit quantization for T4 compatibility.
+   - Used `AutoModelForQuestionAnswering` (or equivalent for API) and SFTTrainer from TRL.
+   - Training args: 3 epochs, batch size 1, gradient accumulation 8, learning rate 2e-4, BF16, AdamW optimizer (weight decay 0.01).
 
 3. **Evaluation**:
-   - Post-processed model logits to extract the best answer (top-20 candidates, max answer length 30 tokens).
-   - Computed SQuAD metrics (Exact Match, F1) using the `evaluate` library.
-   - Verified metric computation with dummy data during development.
+   - Post-processed API logits to extract best answers (top-20 candidates, max length 30 tokens).
+   - Computed SQuAD metrics (Exact Match, F1) using `evaluate` library.
+   - Verified metrics with dummy data during development.
 
 4. **Saving and Inference**:
-   - Saved the best model based on F1 score to `./parsbert-pquad-best`.
-   - Generated predictions on the test set and evaluated performance.
+   - Saved best model checkpoints via API to `./llama-persianqa-best`.
+   - Generated test set predictions and evaluated performance.
 
 ## Results
-- **Training Performance**: Completed in ~37 minutes on Colab’s T4 GPU. Training loss decreased from 2.33 (Epoch 1) to 0.98 (Epoch 3).
+- **Training Performance**: Completed in ~37 minutes on Colab T4 via API. Training loss decreased from 2.33 (Epoch 1) to 0.98 (Epoch 3).
 - **Evaluation Metrics** (test set):
   - Exact Match: 36.56%
   - F1 Score: 37.43%
   - Evaluation runtime: ~29 seconds.
 
-
 ## Challenges and Solutions
-1. **Dataset Loading Error**:
-   - **Challenge**: Attempting to load PQuAD directly resulted in a `RuntimeError: Dataset scripts are no longer supported, but found pquad.py`. Accessing JSON files online also failed due to connectivity or permission issues.
-   - **Solution**: Downloaded the `pqa_train.json` and `pqa_test.json` files manually and uploaded them to Colab for direct loading using `load_dataset("json", ...)`. This bypassed the script error and ensured data accessibility.
+1. **Model Access Rejection**:
+   - **Challenge**: Request to access `Llama-3.1-8B-4bit` on Hugging Face was rejected, likely due to Meta AI restrictions.
+   - **Solution**: Used API (e.g., Hugging Face Inference API) for fine-tuning, enabling training without direct model download.
 
-2. **Overfitting Risk**:
-   - **Challenge**: The relatively small PQuAD dataset (~10k examples) led to overfitting risks. The model showed signs of memorizing training data, reducing generalization.
-   - **Solution**: Adjusted the number of epochs to 3 to balance learning and overfitting. Monitored validation loss to ensure stability (best F1: 37.43% at Epoch 2). Future work: Explore data augmentation or dropout.
+2. **Dataset Loading Error**:
+   - **Challenge**: Failed to load PersianQA directly (`RuntimeError: Dataset scripts are no longer supported, but found pquad.py`). JSON access failed due to connectivity issues.
+   - **Solution**: Manually downloaded `pqa_train.json` and `pqa_test.json` from https://huggingface.co/datasets/SajjadAyoubi/persian_qa and uploaded to Colab.
 
-3. **Colab T4 GPU Limitations**:
-   - **Challenge**: Running on Colab’s free T4 GPU with limited VRAM (15GB) and occasional session timeouts constrained training. Large batch sizes or sequence lengths risked out-of-memory (OOM) errors.
-   - **Solution**: Used a conservative batch size (16) and max sequence length (384). Monitored memory usage and saved checkpoints to avoid data loss. Future: Upgrade to Colab Pro or use a local GPU.
+3. **Overfitting Risk**:
+   - **Challenge**: Small dataset (~10k examples) led to overfitting; model showed memorization signs.
+   - **Solution**: Limited to 3 epochs; monitored validation loss (best F1: 37.43% at Epoch 2). Future: Use data augmentation.
 
-4. **Transformers Library Complexity**:
-   - **Challenge**: The latest Transformers version (4.55.3) introduced complexities, such as deprecated `tokenizer` in Trainer and renamed evaluation strategies (`eval_strategy` instead of `evaluation_strategy`). Compatibility issues with other libraries (e.g., `evaluate`) caused errors.
-   - **Solution**: Adapted to `eval_strategy` and ensured compatible library versions (e.g., installed `evaluate==0.4.5`). Referenced Hugging Face documentation to resolve deprecation warnings. Future: Pin specific library versions for stability.
+4. **Colab T4 GPU Limitations**:
+   - **Challenge**: T4’s limited VRAM (~15GB) and timeouts risked OOM errors for 8B model.
+   - **Solution**: Used 4-bit quantization via API, batch size 1, gradient accumulation 8. Saved checkpoints to avoid data loss.
+
+5. **Transformers Library Complexity**:
+   - **Challenge**: Transformers v4.55.3 had complexities (e.g., renamed `eval_strategy`, deprecated `tokenizer` in Trainer); API integration issues.
+   - **Solution**: Adapted to `eval_strategy`, installed compatible `evaluate==0.4.5`. Referenced Hugging Face docs.
 
 ## Future Work
-- **Hyperparameter Tuning**: Use tools like Optuna to optimize learning rate, batch size, and epochs.
-- **Data Augmentation**: Apply techniques like synonym replacement or back-translation for Persian to increase dataset size.
-- **No-Answer Detection**: Add a classification head to better handle unanswerable questions.
-- **Deployment**: Create an API using Hugging Face Inference Endpoints or FastAPI.
-- **Environment Upgrade**: Use Colab Pro or a local high-performance GPU for faster training.
+- **Hyperparameter Tuning**: Use Optuna to optimize learning rate, batch size, epochs.
+- **Data Augmentation**: Apply synonym replacement or back-translation for Persian data.
+- **No-Answer Detection**: Add classification head for unanswerable questions.
+- **Deployment**: Create API using Hugging Face Inference Endpoints or FastAPI.
+- **Resource Upgrade**: Use Colab Pro or A100 GPU for faster training.
 
 ## References
-- PQuAD Dataset: https://huggingface.co/datasets/Gholamreza/pquad.
-- Hugging Face Documentation: [Transformers](https://huggingface.co/docs/transformers), [Datasets](https://huggingface.co/docs/datasets).
-- Model: [HooshvareLab/bert-base-parsbert-uncased](https://huggingface.co/HooshvareLab/bert-base-parsbert-uncased).
+- PersianQA Dataset: https://huggingface.co/datasets/SajjadAyoubi/persian_qa
+- Hugging Face Docs: https://huggingface.co/docs/transformers
+- Model: [Llama-3.1-8B-4bit, e.g., via Hugging Face Inference API]
+- BitsAndBytes: https://huggingface.co/docs/bitsandbytes
+- TRL: https://huggingface.co/docs/trl
+- Hugging Face API: https://huggingface.co/docs/api-inference
 
 **Author**: Shaghayegh Shafiee  
 **Date**: August 24, 2025
