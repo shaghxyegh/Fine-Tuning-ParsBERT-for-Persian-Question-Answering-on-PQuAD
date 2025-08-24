@@ -70,9 +70,9 @@ This project marks my first attempt at fine-tuning a machine learning model. I u
 - **Environment Upgrade**: Use Colab Pro or a local high-performance GPU for faster training.
 
 ## References
-- PQuAD Dataset: [Link to source if available].
+- PQuAD Dataset: https://huggingface.co/datasets/Gholamreza/pquad.
 - Hugging Face Documentation: [Transformers](https://huggingface.co/docs/transformers), [Datasets](https://huggingface.co/docs/datasets).
 - Model: [HooshvareLab/bert-base-parsbert-uncased](https://huggingface.co/HooshvareLab/bert-base-parsbert-uncased).
 
-**Author**: [Your Name]  
+**Author**: Shaghayegh Shafiee  
 **Date**: August 24, 2025
