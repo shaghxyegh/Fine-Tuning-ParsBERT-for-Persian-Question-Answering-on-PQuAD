@@ -1,0 +1,2 @@
+# Fine-Tuning-ParsBERT-for-Persian-Question-Answering-on-PQuAD
+My first attempt at fine-tuning ParsBERT on PQuAD for Persian QA using Colab's free T4 GPU. Overcame dataset loading errors, overfitting, and limited VRAM. Achieved 36.56% Exact Match and 37.43% F1 score. Challenges included Transformers library complexities and manual JSON uploads. Future: tune hyperparameters, add no-answer detection.
