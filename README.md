@@ -43,7 +43,7 @@ This project marks my first attempt at fine-tuning a machine learning model. I u
   - Exact Match: 36.56%
   - F1 Score: 37.43%
   - Evaluation runtime: ~29 seconds.
-- The model performs reasonably well on answerable questions but struggles with unanswerable ones, often predicting non-empty answers, which impacts the Exact Match score.
+
 
 ## Challenges and Solutions
 1. **Dataset Loading Error**:
